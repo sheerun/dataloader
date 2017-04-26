@@ -4,9 +4,22 @@ describe Dataloader do
       Hash[ids.zip(ids.map { |id| "awesome #{id}" } )]
     end
 
-    one = loader.load(0)
+    one = loader.load(1)
 
-    expect(one.sync).to eq("awesome 0")
+    expect(one.sync).to eq("awesome 1")
+  end
+
+  it 'can resolve multiple values' do
+    loader = Dataloader.new do |ids|
+      Hash[ids.zip(ids.map { |id| "awesome #{id}" } )]
+    end
+
+    promise = loader.load_many([1, 2])
+
+    one, two = promise.sync
+
+    expect(one).to eq("awesome 1")
+    expect(two).to eq("awesome 2")
   end
 
   it 'can resolves promises as usual' do
