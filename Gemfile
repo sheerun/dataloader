@@ -2,8 +2,11 @@ source "https://rubygems.org"
 
 gemspec
 
-group :development, :test do
+group :test do
+  gem "rspec"
+end
+
+group :development do
   gem "awesome_print"
   gem "byebug"
-  gem "rspec"
 end
