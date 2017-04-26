@@ -1,4 +1,4 @@
-# ![](http://i.imgur.com/i0afc40.png) dataloader [![Build Status](https://travis-ci.org/sheerun/dataloader.svg?branch=master)](https://travis-ci.org/sheerun/dataloader)
+# ![](http://i.imgur.com/i0afc40.png) Dataloader [![Build Status](https://travis-ci.org/sheerun/dataloader.svg?branch=master)](https://travis-ci.org/sheerun/dataloader)
 
 ## Installation
 
