@@ -1,4 +1,14 @@
 describe Dataloader do
+  it 'can resolve single value' do
+    loader = Dataloader.new do |ids|
+      Hash[ids.zip(ids.map { |id| "awesome #{id}" } )]
+    end
+
+    one = loader.load(0)
+
+    expect(one.sync).to eq("awesome 0")
+  end
+
   it 'can resolves promises as usual' do
     loader = Dataloader.new do |ids|
       puts "Loading records: #{ids.join(' ')}"
