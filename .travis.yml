@@ -10,5 +10,5 @@ rvm:
   - "2.3.3"
   - "2.4.0"
   - "jruby-19mode"
-  - "rbx-2.5.8"
+  - "rbx"
 script: bundle exec rspec
