@@ -1,8 +1,9 @@
-# frozen_string_literal: true
 source "https://rubygems.org"
 
-gem "concurrent-ruby"
-gem "promise.rb"
-gem "awesome_print"
-gem "byebug"
-gem "eventmachine"
+gemspec
+
+group :development, :test do
+  gem "awesome_print"
+  gem "byebug"
+  gem "rspec"
+end

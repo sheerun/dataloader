@@ -1,6 +1,7 @@
-require 'promise'
-require 'concurrent'
 require 'thread'
+
+require 'concurrent'
+require 'promise'
 
 class Promise
   def wait
@@ -70,13 +71,13 @@ class BatchPromise < Promise
 
   def handle_result(keys, values)
     unless values.is_a?(Array) || values.is_a?(Hash)
-      raise TypeError, 'DataLoader must be constructed with a block which accepts ' \
+      raise TypeError, 'Dataloader must be constructed with a block which accepts ' \
         'Array<key> and returns Array<value> or Hash<key, value>. ' \
         "Function returned instead: #{values}."
     end
 
     if keys.size != values.size
-      raise TypeError, 'DataLoader must be instantiated with function that returns Array or Hash ' \
+      raise TypeError, 'Dataloader must be instantiated with function that returns Array or Hash ' \
         'of the same size as provided to it Array of keys' \
         "\n\nProvided keys:\n#{keys}" \
         "\n\nReturned values:\n#{values}"
@@ -88,10 +89,12 @@ class BatchPromise < Promise
   end
 end
 
-class DataLoader
+class Dataloader
+  VERSION = "0.0.0"
+
   def initialize(options = {}, &batch_load)
     unless block_given?
-      raise TypeError, 'DataLoader must be constructed with a block which accepts ' \
+      raise TypeError, 'Dataloader must be constructed with a block which accepts ' \
         'Array<key> and returns Array<value> or Hash<key, value>'
     end
 
@@ -162,37 +165,3 @@ class DataLoader
     @batch_promise.dispatch if @batch_promise && !@batch_promise.dispatched?
   end
 end
-
-loader = DataLoader.new do |ids|
-  puts "Loading records: #{ids.join(' ')}"
-  Hash[ids.zip(ids.map { |id| { id: id, name: "Something #{id}" } })]
-end
-
-loader2 = DataLoader.new(name: 'names') do |ids|
-  puts "Loading names: #{ids.join(' ')}"
-  loader.load_many(ids).then do |records|
-    Hash[ids.zip(records.map { |r| r[:name] })]
-  end
-end
-
-one = loader.load(0)
-two = loader.load_many([1, 2])
-three = loader.load_many([2, 3])
-four = loader2.load_many([2, 3, 5])
-
-loader3 = DataLoader.new(name: 'awesome') do |ids|
-  puts "Loading awesome names: #{ids.join(' ')}"
-  loader2.load_many(ids).then do |names|
-    Hash[ids.zip(names.map { |name| "Awesome #{name}" })]
-  end
-end
-
-five = loader3.load_many([2, 3, 5, 7])
-
-DataLoader.wait
-
-puts five.sync
-puts four.sync
-puts three.sync
-puts two.sync
-puts one.sync
