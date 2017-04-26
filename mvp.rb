@@ -101,10 +101,10 @@ class DataLoader
     @promises = Concurrent::Map.new
     @values = Concurrent::Map.new
 
-    Thread.current[:pending_batches] = []
+    Thread.current[:pending_batches] ||= []
   end
 
-  def self.dispatch
+  def self.wait
     Thread.current[:pending_batches].each(&:dispatch)
   end
 
@@ -175,6 +175,11 @@ loader2 = DataLoader.new(name: 'names') do |ids|
   end
 end
 
+one = loader.load(0)
+two = loader.load_many([1, 2])
+three = loader.load_many([2, 3])
+four = loader2.load_many([2, 3, 5])
+
 loader3 = DataLoader.new(name: 'awesome') do |ids|
   puts "Loading awesome names: #{ids.join(' ')}"
   loader2.load_many(ids).then do |names|
@@ -182,13 +187,9 @@ loader3 = DataLoader.new(name: 'awesome') do |ids|
   end
 end
 
-one = loader.load(0)
-two = loader.load_many([1, 2])
-three = loader.load_many([2, 3])
-four = loader2.load_many([2, 3, 5])
 five = loader3.load_many([2, 3, 5, 7])
 
-DataLoader.dispatch
+DataLoader.wait
 
 puts five.sync
 puts four.sync
