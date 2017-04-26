@@ -1,9 +1,6 @@
 require 'promise'
 require 'concurrent'
-require 'awesome_print'
-require 'byebug'
 require 'thread'
-require 'thwait'
 
 class Promise
   def wait

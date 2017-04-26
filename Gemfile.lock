@@ -2,10 +2,10 @@ GEM
   remote: https://rubygems.org/
   specs:
     awesome_print (1.7.0)
-    byebug (9.0.5)
-    concurrent-ruby (1.0.2)
-    eventmachine (1.0.9.1)
-    promise.rb (0.7.1)
+    byebug (9.0.6)
+    concurrent-ruby (1.0.5)
+    eventmachine (1.2.3)
+    promise.rb (0.7.2)
 
 PLATFORMS
   ruby
@@ -18,4 +18,4 @@ DEPENDENCIES
   promise.rb
 
 BUNDLED WITH
-   1.13.1
+   1.14.6
