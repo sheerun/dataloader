@@ -16,52 +16,50 @@ class Promise
   end
 end
 
-class BatchPromise < Promise
+class Batch
   def initialize(dataloader)
+    # Used for storing cache of promises and batch load method
     @dataloader = dataloader
-    @trigger = Promise.new
-    @dispatch = @trigger.then { callback }
+    # Batch can be dispatched only once (it loads all queued promises)
+    @dispatched = false
+    # This is where result of executing batch is stored
+    @result = Promise.new
+    # This is where items to batch load are stored
     @queue = Concurrent::Array.new
+    # We store pending batches to load per-thread
     Thread.current[:pending_batches].unshift(self)
   end
 
-  def then(on_fulfill = nil, on_reject = nil, &block)
-    @dispatch.then(on_fulfill, on_reject, &block)
-  end
-
   def dispatch
-    @trigger.fulfill
-    self
+    @dispatched = true
+
+    result = @dataloader.batch_load.call(@queue)
+    if result.is_a?(Promise)
+      result.then do |values|
+        @result.fulfill(handle_result(@queue, values))
+      end
+    else
+      @result.fulfill(handle_result(@queue, result))
+    end
   end
 
   def dispatched?
-    !@trigger.pending?
+    @dispatched
   end
 
   def queue(key)
-    if dispatched?
+    if @dispatched
       raise StandardError, "Cannot queue elements after batch is dispatched. Queued key: #{key}"
     end
 
     @queue.push(key)
 
-    @dispatch.then do |values|
+    @result.then do |values|
       unless values.key?(key)
         raise StandardError, "Promise didn't resolve a key: #{key}\nResolved keys: #{values.keys.join(' ')}"
       end
 
       values[key]
-    end
-  end
-
-  def callback
-    result = @dataloader.batch_load.call(@queue)
-    if result.is_a?(Promise)
-      result.then do |values|
-        handle_result(@queue, values)
-      end
-    else
-      Promise.resolve(handle_result(@queue, result))
     end
   end
 
@@ -86,7 +84,7 @@ class BatchPromise < Promise
 end
 
 class Dataloader
-  VERSION = "0.0.0"
+  VERSION = "1.0.0"
 
   attr_reader :batch_load
 
@@ -98,8 +96,7 @@ class Dataloader
 
     @options = options
     @batch_load = batch_load
-
-    @promises = Concurrent::Map.new
+    @cache = Concurrent::Map.new
 
     Thread.current[:pending_batches] ||= []
   end
@@ -110,22 +107,6 @@ class Dataloader
       Thread.current[:pending_batches] = []
       pending.each(&:dispatch)
     end
-  end
-
-  def compute_if_absent(key)
-    cache_key = @options.key?(:key) ? @options.key.call(key) : key
-
-    @promises.compute_if_absent(cache_key) do
-      yield
-    end
-  end
-
-  def batch_promise
-    if @batch_promise.nil? || @batch_promise.dispatched?
-      @batch_promise = BatchPromise.new(self)
-    end
-
-    @batch_promise
   end
 
   def load(key)
@@ -145,4 +126,23 @@ class Dataloader
 
     Promise.all(keys.map(&method(:load)))
   end
+
+  protected
+
+  def compute_if_absent(key)
+    cache_key = @options.key?(:key) ? @options.key.call(key) : key
+
+    @cache.compute_if_absent(cache_key) do
+      yield
+    end
+  end
+
+  def batch_promise
+    if @batch_promise.nil? || @batch_promise.dispatched?
+      @batch_promise = Batch.new(self)
+    end
+
+    @batch_promise
+  end
+
 end
