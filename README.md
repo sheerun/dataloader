@@ -91,6 +91,22 @@ This field is writable, so you can reset the cache with something like:
 loader.cache = Concurrent::Map.new
 ```
 
+### `#wait`
+
+Triggers all batched loaders until there are no keys to resolve.
+
+This method is invoked automatically when value of any promise is requested with `#sync`
+
+Here is the implementation that Dataloader sets as a default for [Promise](https://github.com/lgierth/promise.rb):
+
+```ruby
+class Promise
+  def wait
+    Dataloader.wait
+  end
+end
+```
+
 ## License
 
 MIT
