@@ -325,4 +325,18 @@ describe Dataloader do
     expect(one.sync).to eq([0,0])
   end
 
+  it 'can reset the cache' do
+    data_loader = Dataloader.new do |ids|
+      ids.map { |id| ids }
+    end
+
+    one = data_loader.load(0).sync
+
+    data_loader.cache = Concurrent::Map.new
+    data_loader.cache[0] = 42
+
+    one_again = data_loader.load(0)
+
+    expect(one_again.sync).to eq(42)
+  end
 end

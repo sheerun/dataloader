@@ -84,6 +84,12 @@ object_a, object_b = promise.sync
 
 Returns the internal cache that can be overridden with `:cache` option (see constructor)
 
+This field is writable, so you can reset the cache with something like:
+
+```ruby
+loader.cache = Concurrent::Map.new
+```
+
 ## License
 
 MIT

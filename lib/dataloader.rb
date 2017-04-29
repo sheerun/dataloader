@@ -94,8 +94,12 @@ class Dataloader
   end
 
   # Returns the internal cache that can be overridden with `:cache` option (see constructor)
+  # This field is writable, so you can reset the cache with something like:
+  # 
+  #   loader.cache = Concurrent::Map.new
+  #
   # Defaults to Concurrent::Map.new
-  attr_reader :cache
+  attr_accessor :cache
 
   # @!visibility private
   attr_reader :batch_load
