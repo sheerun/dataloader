@@ -1,7 +1,7 @@
 require "concurrent"
 require "promise"
 
-# @api private
+# @!visibility private
 class Promise  
   alias_method :wait_old, :wait
 
@@ -14,7 +14,7 @@ end
 class Dataloader
   VERSION = "1.0.0".freeze
 
-  # @api private
+  # @!visibility private
   class Batch
     def initialize(dataloader)
       # Used for storing cache of promises and batch load method
@@ -85,7 +85,7 @@ class Dataloader
     end
   end
 
-  # @api private
+  # @!visibility private
   attr_reader :batch_load
 
   # Creates new dataloader
