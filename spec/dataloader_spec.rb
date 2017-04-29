@@ -435,4 +435,15 @@ describe Dataloader do
     expect(one.sync).to eq([1, 2])
     expect(three.sync).to eq([3])
   end
+
+  it 'returns the same promise when called two times' do
+    loader = Dataloader.new do |ids|
+      ids.map { |id| ids }
+    end
+
+    one = loader.load(0)
+    two = loader.load(0)
+
+    expect(one).to be(two)
+  end
 end

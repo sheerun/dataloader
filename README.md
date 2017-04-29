@@ -70,6 +70,111 @@ context = {
 Schema.execute("{ user(id: 12) { name } }", context: context)
 ```
 
+## Batching
+
+You can create loaders by providing a batch loading function.
+
+```ruby
+user_loader = Dataloader.new { |ids| User.find(*ids) }
+```
+
+A batch loading block accepts an Array of keys, and returns a Promise which resolves to an Array or Hash of values.
+
+Dataloader will coalesce all individual loads which occur until first `.sync` is called on any promise returned by `#load` or `#load_many`, and then call your batch function with all requested keys.
+
+```ruby
+user_loader.load(1)
+  .then { |user| user_loader.load(user.invited_by_id)) }
+  .then { |invited_by| "User 1 was invited by ${invited_by[:name]}" };
+
+// Elsewhere in your backend
+user_loader.load(2)
+  .then { |user| user_loader.load(user.invited_by_id)) }
+  .then { |invited_by| "User 2 was invited by ${invited_by[:name]}" };
+```
+
+A naive solution is to isisue four SQL queries to get required information, but with `Dataloader` this application will make at most two queries (one to load users, and second one to load invites).
+
+`Dataloader` allows you to decouple unrelated parts of your application without sacrificing the performance of batch data-loading. While the loader presents an API that loads individual values, all concurrent requests will be coalesced and presented to your batch loading function. This allows your application to safely distribute data fetching requirements throughout your application and maintain minimal outgoing data requests.
+
+### Batch function
+
+A batch loading function accepts an Array of keys, and returns Array of values or Hash that maps from keys to values      (or a [Promise](https://github.com/lgierth/promise.rb) that returns such Array or Hash). There are a few constraints that must be upheld:
+
+* The Array of values must be the same length as the Array of keys.
+* Each index in the Array of values must correspond to the same index in the Array of keys.
+* If Hash is returned, it must include all keys passed to batch loading function
+
+For example, if your batch function was provided the Array of keys: `[ 2, 9, 6 ]`, you could return one of following:
+
+```ruby
+[
+  { id: 2, name: "foo" },
+  { id: 9, name: "bar" },
+  { id: 6, name: "baz" }
+]
+```
+
+```ruby
+{
+  2 => { id: 2, name: "foo" },
+  9 => { id: 9, name: "bar" },
+  6 => { id: 6, name: "baz" }
+}
+```
+
+## Caching
+
+Dataloader provides a memoization cache for all loads which occur withing single instance of it. After `#load` is called once with a given key, the resulting Promise is cached to eliminate redundant loads.
+
+In addition to reliving pressure on your data storage, caching results per-request also creates fewer objects which may relieve memory pressure on your application:
+
+```
+promise1 = user_loader.load(1)
+promise2 = user_loader.load(1)
+promise1 == promise2 # => true
+```
+
+### Caching per-request
+
+`Dataloader` caching does not replace Redis, Memcache, or any other shared application-level cache. DataLoader is first and foremost a data loading mechanism, and its cache only serves the purpose of not repeatedly loading the same data in the context of a single request to your Application. To do this, it maintains a simple in-memory memoization cache (more accurately: `#load` is a memoized function).
+
+Avoid multiple requests from different users using the same `Dataloader` instance, which could result in cached data incorrectly appearing in each request. Typically, `Dataloader` instances are created when a request begins, and are not used once the request ends.
+
+See "Using with GraphQL" section to see how you can pass dataloader instances using context.
+
+### Caching errors
+
+If a batch load fails (that is, a batch function throws or returns a rejected Promise), then the requested values will not be cached. However if a batch function returns an Error instance for an individual value, that Error will be cached to avoid frequently loading the same Error.
+
+In some circumstances you may wish to clear the cache for these individual Errors:
+
+```ruby
+user_loader.load(1).rescue do |error|
+  user_loader.cache.delete(1)
+  raise error
+end
+```
+
+### Disabling cache
+
+In certain uncommon cases, a Dataloader which does not cache may be desirable. Calling `Dataloader.new({ cache: nil }) { ... }` will ensure that every call to `#load` will produce a new Promise, and requested keys will not be saved in memory.
+
+However, when the memoization cache is disabled, your batch function will receive an array of keys which may contain duplicates! Each key will be associated with each call to `#load`. Your batch loader should provide a value for each instance of the requested key.
+
+```ruby
+loader = Dataloader.new({ cache: nil }) do |keys|
+  puts keys
+  some_loading_function(keys)
+end
+
+loader.load('A')
+loader.load('B')
+loader.load('A')
+
+// > [ 'A', 'B', 'A' ]
+```
+
 ## API
 
 ### `Dataloader`
@@ -84,9 +189,9 @@ You shound't share the same dataloader instance across different threads. This b
 
 Create a new `Dataloader` given a batch loading function and options.
 
-* `batch_load`: A block which accepts an Array of keys, and returns  Array of values or Hash that maps from keys to values (or a [Promise](https://github.com/lgierth/promise.rb) that returns such value).
+* `batch_load`: A block which accepts an Array of keys, and returns Array of values or Hash that maps from keys to values (or a [Promise](https://github.com/lgierth/promise.rb) that returns such value).
 * `options`: An optional hash of options:
-  * `:key` A function to produce a cache key for a given load key. Defaults to proc { |key| key }. Useful to provide when objects are keys and two similarly shaped objects should be considered equivalent.
+  * `:key` A function to produce a cache key for a given load key. Defaults to function { |key| key }. Useful to provide when objects are keys and two similarly shaped objects should be considered equivalent.
   * `:cache` An instance of cache used for caching of promies. Defaults to `Concurrent::Map.new`.
     - The only required API is `#compute_if_absent(key)`).
     - You can pass `nil` if you want to disable the cache.
