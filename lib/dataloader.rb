@@ -1,5 +1,3 @@
-require 'thread'
-
 require 'concurrent'
 require 'promise'
 
@@ -33,7 +31,8 @@ class Batch
   def dispatch
     @dispatched = true
 
-    result = @dataloader.batch_load.call(@queue)
+    result = @dataloader.load_batch.call(@queue)
+
     if result.is_a?(Promise)
       result.then do |values|
         @result.fulfill(handle_result(@queue, values))
@@ -63,6 +62,8 @@ class Batch
     end
   end
 
+  protected
+
   def handle_result(keys, values)
     unless values.is_a?(Array) || values.is_a?(Hash)
       raise TypeError, 'Dataloader must be constructed with a block which accepts ' \
@@ -86,16 +87,16 @@ end
 class Dataloader
   VERSION = "1.0.0"
 
-  attr_reader :batch_load
+  attr_reader :load_batch
 
-  def initialize(options = {}, &batch_load)
+  def initialize(options = {}, &load_batch)
     unless block_given?
       raise TypeError, 'Dataloader must be constructed with a block which accepts ' \
         'Array<Object> and returns Array<Object> or Hash<Object, Object>'
     end
 
     @options = options
-    @batch_load = batch_load
+    @load_batch = load_batch
     @cache = Concurrent::Map.new
 
     Thread.current[:pending_batches] ||= []
