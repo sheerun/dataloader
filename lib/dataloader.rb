@@ -57,15 +57,13 @@ class BatchPromise < Promise
   end
 
   def callback
-    @running = true
-    keys = @queue - @dataloader.cache.keys
-    result = @dataloader.batch_load.call(keys)
+    result = @dataloader.batch_load.call(@queue)
     if result.is_a?(Promise)
       result.then do |values|
-        handle_result(keys, values)
+        handle_result(@queue, values)
       end
     else
-      Promise.resolve(handle_result(keys, result))
+      Promise.resolve(handle_result(@queue, result))
     end
   end
 
@@ -92,7 +90,6 @@ end
 class Dataloader
   VERSION = "0.0.0"
 
-  attr_reader :cache
   attr_reader :batch_load
 
   def initialize(options = {}, &batch_load)
@@ -105,7 +102,6 @@ class Dataloader
     @batch_load = batch_load
 
     @promises = Concurrent::Map.new
-    @cache = Concurrent::Map.new
 
     Thread.current[:pending_batches] ||= []
   end
@@ -118,12 +114,20 @@ class Dataloader
     end
   end
 
-  def defer
-    yield
+  def compute_if_absent(key)
+    cache_key = @options.key?(:key) ? @options.key.call(key) : key
+
+    @promises.compute_if_absent(cache_key) do
+      yield
+    end
   end
 
-  def log(*args)
-    puts "[#{@options[:name]}] #{args.join(' ')}"
+  def batch_promise
+    if @batch_promise.nil? || @batch_promise.dispatched?
+      @batch_promise = BatchPromise.new(self)
+    end
+
+    @batch_promise
   end
 
   def load(key)
@@ -131,36 +135,9 @@ class Dataloader
       raise TypeError, "The loader.load() must be called with a key, but got: #{key}"
     end
 
-    cache_key_fn = @options.fetch(:key, ->(key) { key })
-
-    cache_key = if cache_key_fn.respond_to?(:call)
-                  cache_key_fn.call(key)
-                else
-                  key[cache_key_fn]
-                end
-
-    @promises.compute_if_absent(cache_key) do
-      batch = batch_promise
-      batch.queue(key)
+    compute_if_absent(key) do
+      batch_promise.queue(key)
     end
-  end
-
-  def batch_promise
-    if @batch_promise.nil? || @batch_promise.dispatched?
-      new_promise = create_batch_promise
-      # if @batch_promise
-      #   defer do
-      #     new_promise.dispatch
-      #   end
-      # end
-      @batch_promise = new_promise
-    end
-
-    @batch_promise
-  end
-
-  def create_batch_promise
-    BatchPromise.new(self)
   end
 
   def load_many(keys)
@@ -169,9 +146,5 @@ class Dataloader
     end
 
     Promise.all(keys.map(&method(:load)))
-  end
-
-  def dispatch
-    @batch_promise.dispatch if @batch_promise && !@batch_promise.dispatched?
   end
 end

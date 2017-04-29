@@ -192,6 +192,49 @@ describe Dataloader do
     expect(two.sync).to eq(3)
   end
 
+  it 'caches values for each key' do
+    calls = 0
+
+    data_loader = Dataloader.new do |ids|
+      calls += 1
+      ids.map { |id| id }
+    end
+
+    one = data_loader.load(1)
+    two = data_loader.load(2)
+
+    expect(one.sync).to be(1)
+    expect(two.sync).to be(2)
+
+    one2 = data_loader.load(1)
+    two2 = data_loader.load(2)
+
+    expect(one2.sync).to be(1)
+    expect(two2.sync).to be(2)
+
+    expect(calls).to be(1)
+  end
+
+  it 'uses cache for load_many as well (per-item)' do
+    calls = 0
+    data_loader = Dataloader.new do |ids|
+      calls += 1
+      ids.map { |id| ids }
+    end
+
+    2.times do
+      one = data_loader.load_many([1,2])
+      two = data_loader.load_many([2,3])
+
+      expect(one.sync[0]).to eq([1,2,3])
+      expect(one.sync[1]).to eq([1,2,3])
+      expect(two.sync[0]).to eq([1,2,3])
+      expect(two.sync[1]).to eq([1,2,3])
+    end
+
+    expect(calls).to eq(1)
+  end
+
   it 'can resolves promises as usual' do
     loader = Dataloader.new do |ids|
       puts "Loading records: #{ids.join(' ')}"
