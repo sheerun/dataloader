@@ -75,13 +75,11 @@ class Dataloader
 
     def handle_result(keys, values)
       unless values.is_a?(Array) || values.is_a?(Hash)
-        raise TypeError, "Dataloader must be constructed with a block which accepts " \
-          "Array<Object> and returns Array<Object> or Hash<Object, Object>. " \
-          "Block returned instead: #{values}."
+        raise TypeError, "batch loader must return an Array or Hash, but returned: #{values.class.name}"
       end
 
       if keys.size != values.size
-        raise TypeError, "Dataloader must be instantiated with function that returns Array or Hash " \
+        raise TypeError, "batch loader must be instantiated with function that returns Array or Hash " \
           "of the same size as provided to it Array of keys" \
           "\n\nProvided keys:\n#{keys}" \
           "\n\nReturned values:\n#{values}"
@@ -113,7 +111,7 @@ class Dataloader
   def initialize(options = {}, &batch_load)
     unless block_given?
       raise TypeError, "Dataloader must be constructed with a block which accepts " \
-        "Array<Object> and returns Array<Object> or Hash<Object, Object>"
+        "Array and returns either Array or Hash of the same size (or Promise)"
     end
 
     @batch_load = batch_load
