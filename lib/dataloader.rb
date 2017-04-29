@@ -1,7 +1,7 @@
 require "concurrent"
 require "promise"
 
-class Promise
+class Promise  # :nodoc:
   alias_method :wait_old, :wait
 
   def wait
