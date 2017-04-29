@@ -6,13 +6,13 @@ Dataloader is a generic utility to be used as part of your application's data fe
 
 ## Installation
 
-```
+```ruby
 gem "dataloader"
 ```
 
 ## Basic usage
 
-```rb
+```ruby
 # It will be called only once with ids = [1, 2, 3]
 loader = Dataloader.new do |ids|
   User.find(*ids)
