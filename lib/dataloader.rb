@@ -21,7 +21,6 @@ class BatchPromise < Promise
     @dataloader = dataloader
     @trigger = Promise.new
     @dispatch = @trigger.then { callback }
-    @dispatched = false
     @queue = Concurrent::Array.new
     Thread.current[:pending_batches].unshift(self)
   end
@@ -31,17 +30,16 @@ class BatchPromise < Promise
   end
 
   def dispatch
-    @dispatched = true
     @trigger.fulfill
     self
   end
 
   def dispatched?
-    @dispatched
+    !@trigger.pending?
   end
 
   def queue(key)
-    if @dispatched
+    if dispatched?
       raise StandardError, "Cannot queue elements after batch is dispatched. Queued key: #{key}"
     end
 
