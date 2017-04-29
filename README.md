@@ -1,4 +1,4 @@
-# ![](http://i.imgur.com/i0afc40.png) Dataloader
+# ![](http://i.imgur.com/ZdJKtj1.png) Dataloader
 
 [![Build Status](https://travis-ci.org/sheerun/dataloader.svg?branch=master)](https://travis-ci.org/sheerun/dataloader) [![codecov](https://codecov.io/gh/sheerun/dataloader/branch/master/graph/badge.svg)](https://codecov.io/gh/sheerun/dataloader)
 
