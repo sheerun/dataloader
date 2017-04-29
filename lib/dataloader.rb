@@ -165,7 +165,7 @@ class Dataloader
   #   user2 = user2_promise.sync
   def load(key)
     if key.nil?
-      raise TypeError, "The loader.load() must be called with a key, but got: #{key}"
+      raise TypeError, "#load must be called with a key, but got: nil"
     end
 
     result = compute_if_absent(key) do
@@ -207,7 +207,7 @@ class Dataloader
   #   user1, user2 = users_promise.sync
   def load_many(keys)
     unless keys.is_a?(Array)
-      raise TypeError, "The loader.load_many() must be called with a Array<Object>, but got: #{key}"
+      raise TypeError, "#load_many must be called with an Array, but got: #{keys.class.name}"
     end
 
     Promise.all(keys.map(&method(:load)))

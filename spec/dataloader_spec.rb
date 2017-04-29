@@ -339,4 +339,24 @@ describe Dataloader do
 
     expect(one_again.sync).to eq(42)
   end
+
+  it 'raises an TypeError if keys passed to load_many are not array' do
+    data_loader = Dataloader.new do |ids|
+      ids.map { |id| ids }
+    end
+
+    expect {
+      data_loader.load_many(42)
+    }.to raise_error(TypeError, "#load_many must be called with an Array, but got: Integer")
+  end
+
+  it 'raises an TypeError if keys passed to load is nil' do
+    data_loader = Dataloader.new do |ids|
+      ids.map { |id| ids }
+    end
+
+    expect {
+      data_loader.load(nil)
+    }.to raise_error(TypeError, "#load must be called with a key, but got: nil")
+  end
 end
