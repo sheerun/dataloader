@@ -115,11 +115,14 @@ class Dataloader
   # @yieldparam [Array] array is batched ids to load
   # @yieldreturn [Promise] a promise of loaded value with batch_load block
   def initialize(options = {}, &batch_load)
+    Thread.current[:pending_batches] ||= []
+
     unless block_given?
       raise TypeError, "Dataloader must be constructed with a block which accepts " \
         "Array and returns either Array or Hash of the same size (or Promise)"
     end
 
+    @batch_promise = Batch.new(self)
     @batch_load = batch_load
 
     @key = options.fetch(:key, lambda { |key| key })
@@ -129,8 +132,6 @@ class Dataloader
     if @cache.nil?
       @cache = NoCache.new
     end
-
-    Thread.current[:pending_batches] ||= []
   end
 
   # Forces all currently pending promises to be executed and resolved
@@ -227,7 +228,7 @@ class Dataloader
   end
 
   def batch_promise
-    if @batch_promise.nil? || @batch_promise.dispatched?
+    if @batch_promise.dispatched?
       @batch_promise = Batch.new(self)
     end
 
