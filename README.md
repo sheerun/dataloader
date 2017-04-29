@@ -61,7 +61,7 @@ All calls to `#load` are batched until the first `#sync` is encountered. Then is
 
 **keys** [Array<Object>] list of keys to load using `batch_load`
 
-Returns a [Promise<Array>](https://github.com/lgierth/promise.rb) of computed values.
+Returns a [Promise<Array>](https://github.com/lgierth/promise.rb) of array of computed values.
 
 To give an example, to multiple keys:
 
