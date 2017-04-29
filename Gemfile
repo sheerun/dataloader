@@ -4,4 +4,3 @@ gemspec
 
 gem "awesome_print"
 gem "rspec"
-gem "byebug"
