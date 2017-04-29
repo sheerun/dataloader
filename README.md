@@ -85,12 +85,12 @@ Dataloader will coalesce all individual loads which occur until first `.sync` is
 ```ruby
 user_loader.load(1)
   .then { |user| user_loader.load(user.invited_by_id)) }
-  .then { |invited_by| "User 1 was invited by ${invited_by[:name]}" };
+  .then { |invited_by| "User 1 was invited by ${invited_by[:name]}" }
 
-// Elsewhere in your backend
+# Elsewhere in your backend
 user_loader.load(2)
   .then { |user| user_loader.load(user.invited_by_id)) }
-  .then { |invited_by| "User 2 was invited by ${invited_by[:name]}" };
+  .then { |invited_by| "User 2 was invited by ${invited_by[:name]}" }
 ```
 
 A naive solution is to isisue four SQL queries to get required information, but with `Dataloader` this application will make at most two queries (one to load users, and second one to load invites).
