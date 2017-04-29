@@ -5,11 +5,16 @@
 
 Dataloader is a generic utility to be used as part of your application's data fetching layer to provide a simplified and consistent API to perform batching and caching within a request. It is heavily inspired by [Facebook's dataloader](https://github.com/facebook/dataloader).
 
-## Installation
+## Getting started
+
+First, install Dataloader using bundler:
 
 ```ruby
 gem "dataloader"
 ```
+
+To get started, create a `Dataloader`. Each `Dataloader` instance represents a unique cache. Typically instances are created per request when used within a web-server. To see how to use with GraphQL server, see section below.
+
 
 ## Basic usage
 
@@ -26,6 +31,43 @@ promise_two = loader.load_many([1, 2])
 # Get promises results
 user0 = promise_one.sync
 user1, user2 = promise_two.sync
+```
+
+## Using with GraphQL
+
+You can pass loaders passed inside [`context`](https://rmosolgo.github.io/graphql-ruby/queries/executing_queries).
+
+```ruby
+UserType = GraphQL::ObjectType.define do
+  field :name, types.String
+end
+
+QueryType = GraphQL::ObjectType.define do
+  name "Query"
+  description "The query root of this schema"
+
+  field :user do
+    type UserType
+    argument :id, !types.ID
+    resolve ->(obj, args, ctx) {
+      ctx[:user_loader].load(args["id"])
+    }
+  end
+end
+
+Schema = GraphQL::Schema.define do
+  lazy_resolve(Promise, :sync)
+
+  query QueryType
+end
+
+context = {
+  user_loader: Dataloader.new do |ids|
+    User.find(*ids)
+  end
+}
+
+Schema.execute("{ user(id: 12) { name } }", context: context)
 ```
 
 ## API
