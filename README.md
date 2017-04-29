@@ -20,9 +20,6 @@ end
 promise_one = loader.load(0)
 promise_two = loader.load_many([1, 2])
 
-# Load all batched promises
-Dataloader.wait
-
 # Get promises results
 user0 = promise_one.sync
 user1, user2 = promise_two.sync
