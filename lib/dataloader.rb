@@ -5,21 +5,24 @@ require 'promise'
 
 class Promise
   def wait
-    pending = Thread.current[:pending_batches]
-    Thread.current[:pending_batches] = []
-    pending.each(&:dispatch)
+    Dataloader.wait
+
+    # Original implementation
+    while source
+      saved_source = source
+      saved_source.wait
+      break if saved_source.equal?(source)
+    end
   end
 end
 
 class BatchPromise < Promise
-  def initialize(batch_load, cache)
+  def initialize(dataloader)
+    @dataloader = dataloader
     @trigger = Promise.new
     @dispatch = @trigger.then { callback }
     @dispatched = false
     @queue = Concurrent::Array.new
-    @batch_load = batch_load
-    @cache = cache
-    @after_dispatch = Promise.new
     Thread.current[:pending_batches].unshift(self)
   end
 
@@ -36,8 +39,6 @@ class BatchPromise < Promise
   def dispatched?
     @dispatched
   end
-
-  attr_reader :after_dispatch
 
   def queue(key)
     if @dispatched
@@ -57,9 +58,8 @@ class BatchPromise < Promise
 
   def callback
     @running = true
-    keys = @queue - @cache.keys
-    result = @batch_load.call(keys)
-    @after_dispatch.fulfill
+    keys = @queue - @dataloader.cache.keys
+    result = @dataloader.batch_load.call(keys)
     if result.is_a?(Promise)
       result.then do |values|
         handle_result(keys, values)
@@ -92,6 +92,9 @@ end
 class Dataloader
   VERSION = "0.0.0"
 
+  attr_reader :cache
+  attr_reader :batch_load
+
   def initialize(options = {}, &batch_load)
     unless block_given?
       raise TypeError, 'Dataloader must be constructed with a block which accepts ' \
@@ -102,13 +105,21 @@ class Dataloader
     @batch_load = batch_load
 
     @promises = Concurrent::Map.new
-    @values = Concurrent::Map.new
+    @cache = Concurrent::Map.new
 
     Thread.current[:pending_batches] ||= []
   end
 
   def self.wait
-    Thread.current[:pending_batches].each(&:dispatch)
+    while !Thread.current[:pending_batches].empty?
+      pending = Thread.current[:pending_batches]
+      Thread.current[:pending_batches] = []
+      pending.each(&:dispatch)
+    end
+  end
+
+  def defer
+    yield
   end
 
   def log(*args)
@@ -137,12 +148,11 @@ class Dataloader
   def batch_promise
     if @batch_promise.nil? || @batch_promise.dispatched?
       new_promise = create_batch_promise
-      if @batch_promise
-        Thread.start do
-          sleep 0.05
-          new_promise.dispatch
-        end
-      end
+      # if @batch_promise
+      #   defer do
+      #     new_promise.dispatch
+      #   end
+      # end
       @batch_promise = new_promise
     end
 
@@ -150,7 +160,7 @@ class Dataloader
   end
 
   def create_batch_promise
-    BatchPromise.new(@batch_load, @values)
+    BatchPromise.new(self)
   end
 
   def load_many(keys)
