@@ -1,5 +1,5 @@
-require 'concurrent'
-require 'promise'
+require "concurrent"
+require "promise"
 
 class Promise
   def wait
@@ -66,14 +66,14 @@ class Batch
 
   def handle_result(keys, values)
     unless values.is_a?(Array) || values.is_a?(Hash)
-      raise TypeError, 'Dataloader must be constructed with a block which accepts ' \
-        'Array<Object> and returns Array<Object> or Hash<Object, Object>. ' \
+      raise TypeError, "Dataloader must be constructed with a block which accepts " \
+        "Array<Object> and returns Array<Object> or Hash<Object, Object>. " \
         "Block returned instead: #{values}."
     end
 
     if keys.size != values.size
-      raise TypeError, 'Dataloader must be instantiated with function that returns Array or Hash ' \
-        'of the same size as provided to it Array of keys' \
+      raise TypeError, "Dataloader must be instantiated with function that returns Array or Hash " \
+        "of the same size as provided to it Array of keys" \
         "\n\nProvided keys:\n#{keys}" \
         "\n\nReturned values:\n#{values}"
     end
@@ -85,14 +85,14 @@ class Batch
 end
 
 class Dataloader
-  VERSION = "1.0.0"
+  VERSION = "1.0.0".freeze
 
   attr_reader :load_batch
 
   def initialize(options = {}, &load_batch)
     unless block_given?
-      raise TypeError, 'Dataloader must be constructed with a block which accepts ' \
-        'Array<Object> and returns Array<Object> or Hash<Object, Object>'
+      raise TypeError, "Dataloader must be constructed with a block which accepts " \
+        "Array<Object> and returns Array<Object> or Hash<Object, Object>"
     end
 
     @options = options
@@ -103,7 +103,7 @@ class Dataloader
   end
 
   def self.wait
-    while !Thread.current[:pending_batches].empty?
+    until Thread.current[:pending_batches].empty?
       pending = Thread.current[:pending_batches]
       Thread.current[:pending_batches] = []
       pending.each(&:dispatch)
@@ -145,5 +145,4 @@ class Dataloader
 
     @batch_promise
   end
-
 end

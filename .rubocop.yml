@@ -1,0 +1,32 @@
+Style/StringLiterals:
+  EnforcedStyle: double_quotes
+
+Style/MultilineMethodCallIndentation:
+  EnforcedStyle: indented_relative_to_receiver
+
+Style/MultilineHashBraceLayout:
+  EnforcedStyle: symmetrical
+
+Style/FirstMethodArgumentLineBreak:
+  Enabled: true
+
+Style/SingleLineBlockParams:
+  Enabled: false
+
+Style/MultilineMethodCallIndentation:
+  EnforcedStyle: indented
+
+Metrics/LineLength:
+  Max: 120
+
+Metrics/BlockLength:
+  Enabled: false
+
+Metrics/MethodLength:
+  Enabled: false
+
+Metrics/MethodLength:
+  Enabled: false
+
+Documentation:
+  Enabled: false

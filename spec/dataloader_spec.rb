@@ -1,5 +1,5 @@
 describe Dataloader do
-  it 'can resolve single value' do
+  it "can resolve single value" do
     loader = Dataloader.new do |ids|
       ids.map { |id| "awesome #{id}" }
     end
@@ -9,7 +9,7 @@ describe Dataloader do
     expect(one.sync).to eq("awesome 1")
   end
 
-  it 'can resolve two values one separately' do
+  it "can resolve two values one separately" do
     loader = Dataloader.new do |ids|
       ids.map { |id| "awesome #{id}" }
     end
@@ -21,7 +21,7 @@ describe Dataloader do
     expect(two.sync).to eq("awesome 2")
   end
 
-  it 'can resolve multiple values' do
+  it "can resolve multiple values" do
     loader = Dataloader.new do |ids|
       ids.map { |id| "awesome #{id}" }
     end
@@ -34,7 +34,7 @@ describe Dataloader do
     expect(two).to eq("awesome 2")
   end
 
-  it 'can resolve multiple values' do
+  it "can resolve multiple values" do
     loader = Dataloader.new do |ids|
       ids.map { |id| "awesome #{id}" }
     end
@@ -47,36 +47,36 @@ describe Dataloader do
     expect(two).to eq("awesome 2")
   end
 
-  it 'runs loader just one time, even for multiple values' do
+  it "runs loader just one time, even for multiple values" do
     loader = Dataloader.new do |ids|
-      ids.map { |id| ids }
+      ids.map { |_id| ids }
     end
 
     one = loader.load(1)
     two = loader.load(2)
 
-    expect(one.sync).to eq([1,2])
-    expect(two.sync).to eq([1,2])
+    expect(one.sync).to eq([1, 2])
+    expect(two.sync).to eq([1, 2])
   end
 
-  it 'runs loader just one time, even for mixed access values' do
+  it "runs loader just one time, even for mixed access values" do
     loader = Dataloader.new do |ids|
-      ids.map { |id| ids }
+      ids.map { |_id| ids }
     end
 
-    first = loader.load_many([1,2])
+    first = loader.load_many([1, 2])
     loader.load(3)
 
-    expect(first.sync[0]).to eq([1,2,3])
-    expect(first.sync[1]).to eq([1,2,3])
+    expect(first.sync[0]).to eq([1, 2, 3])
+    expect(first.sync[1]).to eq([1, 2, 3])
   end
 
-  it 'can return a hash instead of an array' do
+  it "can return a hash instead of an array" do
     loader = Dataloader.new do |ids|
-      Hash[ids.zip(ids.map { |id| id + 10  })]
+      Hash[ids.zip(ids.map { |id| id + 10 })]
     end
 
-    first = loader.load_many([1,2])
+    first = loader.load_many([1, 2])
     second = loader.load(3)
 
     expect(first.sync[0]).to eq(11)
@@ -84,28 +84,28 @@ describe Dataloader do
     expect(second.sync).to eq(13)
   end
 
-  it 'does not run if no need to' do
+  it "does not run if no need to" do
     calls = 0
     loader = Dataloader.new do |ids|
-      calls = calls + 1
-      Hash[ids.zip(ids.map { |id| ids })]
+      calls += 1
+      Hash[ids.zip(ids.map { |_id| ids })]
     end
 
-    loader.load_many([1,2])
+    loader.load_many([1, 2])
     loader.load(3)
 
     expect(calls).to eq(0)
   end
 
-  it 'works even if loader resolves to a promise executed out of order' do
+  it "works even if loader resolves to a promise executed out of order" do
     promise = Promise.new
 
     loader = Dataloader.new do |ids|
-      ids.map { |id|
+      ids.map do |id|
         promise.then do |value|
           value + id + 40
         end
-      }
+      end
     end
 
     plus_fourty = loader.load(2)
@@ -114,15 +114,15 @@ describe Dataloader do
     expect(plus_fourty.sync).to eq(142)
   end
 
-  it 'works if promise is passed as an argument to dataloader' do
+  it "works if promise is passed as an argument to dataloader" do
     promise = Promise.new
 
     loader = Dataloader.new do |promises|
-      promises.map { |promise|
-        promise.then do |value|
+      promises.map do |p|
+        p.then do |value|
           value + 40
         end
-      }
+      end
     end
 
     plus_fourty = loader.load(promise)
@@ -131,14 +131,14 @@ describe Dataloader do
     expect(plus_fourty.sync).to eq(140)
   end
 
-  it 'can depend on other loaders' do
+  it "can depend on other loaders" do
     data_loader = Dataloader.new do |ids|
-      ids.map { |id| ids }
+      ids.map { |_id| ids }
     end
 
     data_transformer = Dataloader.new do |ids|
       data_loader.load_many(ids).then do |records|
-        records.map { |r| r.count }
+        records.map(&:count)
       end
     end
 
@@ -146,20 +146,19 @@ describe Dataloader do
     one = data_transformer.load(1)
     two = data_transformer.load(2)
 
-
     expect(one.sync).to eq(3)
     expect(two.sync).to eq(3)
-    expect(three.sync).to eq([3,1,2])
+    expect(three.sync).to eq([3, 1, 2])
   end
 
-  it 'does not run what it does not need to when chaining' do
+  it "does not run what it does not need to when chaining" do
     data_loader = Dataloader.new do |ids|
-      ids.map { |id| ids }
+      ids.map { |_id| ids }
     end
 
     data_transformer = Dataloader.new do |ids|
       data_loader.load_many(ids).then do |records|
-        records.map { |r| r.count }
+        records.map(&:count)
       end
     end
 
@@ -172,14 +171,14 @@ describe Dataloader do
     expect(two.sync).to eq(2)
   end
 
-  it 'supports loading out of order when chaining' do
+  it "supports loading out of order when chaining" do
     data_loader = Dataloader.new do |ids|
-      ids.map { |id| ids }
+      ids.map { |_id| ids }
     end
 
     data_transformer = Dataloader.new do |ids|
       data_loader.load_many(ids).then do |records|
-        records.map { |r| r.count }
+        records.map(&:count)
       end
     end
 
@@ -192,7 +191,7 @@ describe Dataloader do
     expect(two.sync).to eq(3)
   end
 
-  it 'caches values for each key' do
+  it "caches values for each key" do
     calls = 0
 
     data_loader = Dataloader.new do |ids|
@@ -215,27 +214,27 @@ describe Dataloader do
     expect(calls).to be(1)
   end
 
-  it 'uses cache for load_many as well (per-item)' do
+  it "uses cache for load_many as well (per-item)" do
     calls = 0
     data_loader = Dataloader.new do |ids|
       calls += 1
-      ids.map { |id| ids }
+      ids.map { |_id| ids }
     end
 
     2.times do
-      one = data_loader.load_many([1,2])
-      two = data_loader.load_many([2,3])
+      one = data_loader.load_many([1, 2])
+      two = data_loader.load_many([2, 3])
 
-      expect(one.sync[0]).to eq([1,2,3])
-      expect(one.sync[1]).to eq([1,2,3])
-      expect(two.sync[0]).to eq([1,2,3])
-      expect(two.sync[1]).to eq([1,2,3])
+      expect(one.sync[0]).to eq([1, 2, 3])
+      expect(one.sync[1]).to eq([1, 2, 3])
+      expect(two.sync[0]).to eq([1, 2, 3])
+      expect(two.sync[1]).to eq([1, 2, 3])
     end
 
     expect(calls).to eq(1)
   end
 
-  it 'can resolve in complex cases' do
+  it "can resolve in complex cases" do
     loads = []
 
     loader = Dataloader.new do |ids|
@@ -270,12 +269,12 @@ describe Dataloader do
     expect(four.sync).to eq(["bar 2", "bar 3", "bar 5"])
     expect(three.sync).to eq([{ name: "bar 2" }, { name: "bar 3" }])
     expect(two.sync).to eq([{ name: "bar 1" }, { name: "bar 2" }])
-    expect(one.sync).to eq({ name: "bar 0" })
+    expect(one.sync).to eq(name: "bar 0")
 
     expect(loads).to eq([
-      ["loader3", [2, 3, 5, 7]],
-      ["loader2", [2, 3, 5, 7]],
-      ["loader", [0, 1, 2, 3, 5, 7]]
-    ])
+                          ["loader3", [2, 3, 5, 7]],
+                          ["loader2", [2, 3, 5, 7]],
+                          ["loader", [0, 1, 2, 3, 5, 7]]
+                        ])
   end
 end
