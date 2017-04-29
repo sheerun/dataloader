@@ -45,7 +45,10 @@ Create a new `Dataloader` given a batch loading function and options.
 * `batch_load`: A block which accepts an Array of keys, and returns  Array of values or Hash that maps from keys to values (or a [Promise](https://github.com/lgierth/promise.rb) that returns such value).
 * `options`: An optional hash of options:
   * `:key` A function to produce a cache key for a given load key. Defaults to proc { |key| key }. Useful to provide when objects are keys and two similarly shaped objects should be considered equivalent.
-  * `:cache` An instance of cache used for caching of promies (the only required API is `#compute_if_absent(key)`). Defaults to `Concurrent::Map.new`. Useful for preserving or pre-populating the cache. You can pass `nil` if you want to disable the cache.
+  * `:cache` An instance of cache used for caching of promies. Defaults to `Concurrent::Map.new`.
+    - The only required API is `#compute_if_absent(key)`).
+    - You can pass `nil` if you want to disable the cache.
+    - You can pass pre-populated cache as well. The values can be Promises.
 
 ### `#load(key)`
 
