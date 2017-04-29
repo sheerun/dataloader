@@ -349,8 +349,8 @@ describe Dataloader do
     end
 
     expect {
-      data_loader.load_many(42)
-    }.to raise_error(TypeError, "#load_many must be called with an Array, but got: Integer")
+      data_loader.load_many("foo")
+    }.to raise_error(TypeError, "#load_many must be called with an Array, but got: String")
   end
 
   it 'raises an TypeError if keys passed to load is nil' do
