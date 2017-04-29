@@ -2,6 +2,8 @@
 
 [![Build Status](https://travis-ci.org/sheerun/dataloader.svg?branch=master)](https://travis-ci.org/sheerun/dataloader)
 
+Dataloader is a generic utility to be used as part of your application's data fetching layer to provide a simplified and consistent API to perform batching and caching within a request. It is heavily inspired by [Facebook's dataloader](https://github.com/facebook/dataloader).
+
 ## Installation
 
 ```
@@ -24,6 +26,8 @@ promise_two = loader.load_many([1, 2])
 user0 = promise_one.sync
 user1, user2 = promise_two.sync
 ```
+
+
 
 ## License
 
