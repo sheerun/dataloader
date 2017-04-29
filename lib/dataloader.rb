@@ -56,15 +56,13 @@ class Dataloader
     end
 
     def queue(key)
-      if @dispatched
-        raise StandardError, "Cannot queue elements after batch is dispatched. Queued key: #{key}"
-      end
+      raise StandardError, "Cannot queue elements after batch is dispatched. Queued key: #{key}. This error shoudn't happen. Please raise an issue on https://github.com/sheerun/dataloader with steps to reproduce" if @dispatched
 
       @queue.push(key)
 
       @result.then do |values|
         unless values.key?(key)
-          raise StandardError, "Promise didn't resolve a key: #{key}\nResolved keys: #{values.keys.join(' ')}"
+          raise StandardError, "Batch loader didn't resolve a key: #{key}. Resolved keys: #{values.keys}"
         end
 
         values[key]
@@ -75,11 +73,11 @@ class Dataloader
 
     def handle_result(keys, values)
       unless values.is_a?(Array) || values.is_a?(Hash)
-        raise TypeError, "batch loader must return an Array or Hash, but returned: #{values.class.name}"
+        raise TypeError, "Batch loader must return an Array or Hash, but returned: #{values.class.name}"
       end
 
       if keys.size != values.size
-        raise TypeError, "batch loader must be instantiated with function that returns Array or Hash " \
+        raise StandardError, "Batch loader must be instantiated with function that returns Array or Hash " \
           "of the same size as provided to it Array of keys" \
           "\n\nProvided keys:\n#{keys}" \
           "\n\nReturned values:\n#{values}"

@@ -360,14 +360,14 @@ describe Dataloader do
     }.to raise_error(TypeError, "#load must be called with a key, but got: nil")
   end
 
-  it 'raises an error if dataloader returns something else than Array or Hash' do 
+  it 'raises an TypeError if batch loader returns something else than Array or Hash' do 
     data_loader = Dataloader.new do |ids|
       "value"
     end
 
     expect {
       data_loader.load(42).sync
-    }.to raise_error(TypeError, "batch loader must return an Array or Hash, but returned: String")
+    }.to raise_error(TypeError, "Batch loader must return an Array or Hash, but returned: String")
   end
 
   it 'raises an error if dataloader returns array of different size' do 
@@ -377,12 +377,37 @@ describe Dataloader do
 
     expect {
       data_loader.load(42).sync
-    }.to raise_error(TypeError, /batch loader must be instantiated with function that returns Array or Hash of the same size as provided to it Array of keys/)
+    }.to raise_error(StandardError, /Batch loader must be instantiated with function that returns Array or Hash of the same size as provided to it Array of keys/)
+  end
+
+  it 'raises an error if dataloader returns hash of different size' do 
+    data_loader = Dataloader.new do |ids|
+      {
+        1 => 2,
+        3 => 4
+      }
+    end
+
+    expect {
+      data_loader.load(42).sync
+    }.to raise_error(StandardError, /Batch loader must be instantiated with function that returns Array or Hash of the same size as provided to it Array of keys/)
   end
 
   it 'raises an error if not passed a dataloader' do
     expect {
       data_loader = Dataloader.new
-    }.to raise_error(TypeError, "Dataloader must be constructed with a block which accepts Array and returns either Array or Hash of the same size (or Promise)")
+    }.to raise_error(StandardError, "Dataloader must be constructed with a block which accepts Array and returns either Array or Hash of the same size (or Promise)")
+  end
+
+  it 'raises an error if dataloader does not return value for given key' do 
+    data_loader = Dataloader.new do |ids|
+      {
+        1 => 2
+      }
+    end
+
+    expect {
+      data_loader.load(42).sync
+    }.to raise_error(StandardError, "Batch loader didn't resolve a key: 42. Resolved keys: [1]")
   end
 end
