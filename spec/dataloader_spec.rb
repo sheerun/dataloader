@@ -235,14 +235,17 @@ describe Dataloader do
     expect(calls).to eq(1)
   end
 
-  it 'can resolves promises as usual' do
+  it 'can resolve in complex cases' do
+    loads = []
+
     loader = Dataloader.new do |ids|
-      puts "Loading records: #{ids.join(' ')}"
-      Hash[ids.zip(ids.map { |id| { id: id, name: "Something #{id}" } })]
+      loads.push(["loader", ids])
+      ids.map { |id| { name: "bar #{id}" } }
     end
 
-    loader2 = Dataloader.new(name: 'names') do |ids|
-      puts "Loading names: #{ids.join(' ')}"
+    loader2 = Dataloader.new do |ids|
+      loads.push(["loader2", ids])
+
       loader.load_many(ids).then do |records|
         Hash[ids.zip(records.map { |r| r[:name] })]
       end
@@ -253,23 +256,26 @@ describe Dataloader do
     three = loader.load_many([2, 3])
     four = loader2.load_many([2, 3, 5])
 
-    loader3 = Dataloader.new(name: 'awesome') do |ids|
-      puts "Loading awesome names: #{ids.join(' ')}"
+    loader3 = Dataloader.new do |ids|
+      loads.push(["loader3", ids])
+
       loader2.load_many(ids).then do |names|
-        Hash[ids.zip(names.map { |name| "Awesome #{name}" })]
+        Hash[ids.zip(names.map { |name| "foo #{name}" })]
       end
     end
 
     five = loader3.load_many([2, 3, 5, 7])
 
-    Dataloader.wait
+    expect(five.sync).to eq(["foo bar 2", "foo bar 3", "foo bar 5", "foo bar 7"])
+    expect(four.sync).to eq(["bar 2", "bar 3", "bar 5"])
+    expect(three.sync).to eq([{ name: "bar 2" }, { name: "bar 3" }])
+    expect(two.sync).to eq([{ name: "bar 1" }, { name: "bar 2" }])
+    expect(one.sync).to eq({ name: "bar 0" })
 
-    puts five.sync
-    puts four.sync
-    puts three.sync
-    puts two.sync
-    puts one.sync
-
-    expect(true).to be(true)
+    expect(loads).to eq([
+      ["loader3", [2, 3, 5, 7]],
+      ["loader2", [2, 3, 5, 7]],
+      ["loader", [0, 1, 2, 3, 5, 7]]
+    ])
   end
 end

@@ -70,8 +70,8 @@ class BatchPromise < Promise
   def handle_result(keys, values)
     unless values.is_a?(Array) || values.is_a?(Hash)
       raise TypeError, 'Dataloader must be constructed with a block which accepts ' \
-        'Array<key> and returns Array<value> or Hash<key, value>. ' \
-        "Function returned instead: #{values}."
+        'Array<Object> and returns Array<Object> or Hash<Object, Object>. ' \
+        "Block returned instead: #{values}."
     end
 
     if keys.size != values.size
@@ -95,7 +95,7 @@ class Dataloader
   def initialize(options = {}, &batch_load)
     unless block_given?
       raise TypeError, 'Dataloader must be constructed with a block which accepts ' \
-        'Array<key> and returns Array<value> or Hash<key, value>'
+        'Array<Object> and returns Array<Object> or Hash<Object, Object>'
     end
 
     @options = options
@@ -142,7 +142,7 @@ class Dataloader
 
   def load_many(keys)
     unless keys.is_a?(Array)
-      raise TypeError, "The loader.load_many() must be called with a Array<key>, but got: #{key}"
+      raise TypeError, "The loader.load_many() must be called with a Array<Object>, but got: #{key}"
     end
 
     Promise.all(keys.map(&method(:load)))
