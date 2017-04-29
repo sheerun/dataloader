@@ -360,7 +360,7 @@ describe Dataloader do
     }.to raise_error(TypeError, "#load must be called with a key, but got: nil")
   end
 
-  it 'raises an TypeError if batch loader returns something else than Array or Hash' do 
+  it 'raises an TypeError if batch loader returns something else than Array or Hash' do
     data_loader = Dataloader.new do |ids|
       "value"
     end
@@ -370,7 +370,7 @@ describe Dataloader do
     }.to raise_error(TypeError, "Batch loader must return an Array or Hash, but returned: String")
   end
 
-  it 'raises an error if dataloader returns array of different size' do 
+  it 'raises an error if dataloader returns array of different size' do
     data_loader = Dataloader.new do |ids|
       [1,2]
     end
@@ -380,7 +380,7 @@ describe Dataloader do
     }.to raise_error(StandardError, /Batch loader must be instantiated with function that returns Array or Hash of the same size as provided to it Array of keys/)
   end
 
-  it 'raises an error if dataloader returns hash of different size' do 
+  it 'raises an error if dataloader returns hash of different size' do
     data_loader = Dataloader.new do |ids|
       {
         1 => 2,
@@ -399,7 +399,7 @@ describe Dataloader do
     }.to raise_error(StandardError, "Dataloader must be constructed with a block which accepts Array and returns either Array or Hash of the same size (or Promise)")
   end
 
-  it 'raises an error if dataloader does not return value for given key' do 
+  it 'raises an error if dataloader does not return value for given key' do
     data_loader = Dataloader.new do |ids|
       {
         1 => 2
@@ -409,5 +409,30 @@ describe Dataloader do
     expect {
       data_loader.load(42).sync
     }.to raise_error(StandardError, "Batch loader didn't resolve a key: 42. Resolved keys: [1]")
+  end
+
+  it 'can disable batching by setting max_batch_size = 1' do
+    loader = Dataloader.new(max_batch_size: 1) do |ids|
+      ids.map { |id| ids }
+    end
+
+    one = loader.load(1)
+    two = loader.load(2)
+
+    expect(one.sync).to eq([1])
+    expect(two.sync).to eq([2])
+  end
+
+  it 'can force grouped batching by setting max_batch_size' do
+    loader = Dataloader.new(max_batch_size: 2) do |ids|
+      ids.map { |id| ids }
+    end
+
+    one = loader.load(1)
+    two = loader.load(2)
+    three = loader.load(3)
+
+    expect(one.sync).to eq([1, 2])
+    expect(three.sync).to eq([3])
   end
 end

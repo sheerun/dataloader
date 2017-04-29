@@ -49,6 +49,7 @@ Create a new `Dataloader` given a batch loading function and options.
     - The only required API is `#compute_if_absent(key)`).
     - You can pass `nil` if you want to disable the cache.
     - You can pass pre-populated cache as well. The values can be Promises.
+  * `:max_batch_size` Limits the number of items that get passed in to the batchLoadFn. Defaults to `INFINITY`. You can pass `1` to disable batching.
 
 ### `#load(key)`
 

@@ -60,6 +60,10 @@ class Dataloader
 
       @queue.push(key)
 
+      if @queue.size >= @dataloader.max_batch_size
+        dispatch
+      end
+
       @result.then do |values|
         unless values.key?(key)
           raise StandardError, "Batch loader didn't resolve a key: #{key}. Resolved keys: #{values.keys}"
@@ -91,7 +95,7 @@ class Dataloader
 
   # Returns the internal cache that can be overridden with `:cache` option (see constructor)
   # This field is writable, so you can reset the cache with something like:
-  # 
+  #
   #   loader.cache = Concurrent::Map.new
   #
   # Defaults to Concurrent::Map.new
@@ -100,10 +104,14 @@ class Dataloader
   # @!visibility private
   attr_reader :batch_load
 
+  # @!visibility private
+  attr_reader :max_batch_size
+
   # Creates new dataloader
   #
   # @option options [Proc] :key A function to produce a cache key for a given load key. Defaults to proc { |key| key }. Useful to provide when objects are keys and two similarly shaped objects should be considered equivalent.
   # @option options [Object] :cache An instance of cache used for caching of promies (the only required api is `#compute_if_absent`). Defaults to Concurrent::Map.new. Values can be either promises or actual values. You can pass `nil` if you don't want caching.
+  # @option options [Object] :max_batch_size Limits the number of items that get passed in to the batchLoadFn. Defaults to  Float::INFINITY. You can pass 1 to disable batching.
   # @yieldparam [Array] array is batched ids to load
   # @yieldreturn [Promise] a promise of loaded value with batch_load block
   def initialize(options = {}, &batch_load)
@@ -116,6 +124,7 @@ class Dataloader
 
     @key = options.fetch(:key, lambda { |key| key })
     @cache = options.fetch(:cache, Concurrent::Map.new)
+    @max_batch_size = options.fetch(:max_batch_size, Float::INFINITY)
 
     if @cache.nil?
       @cache = NoCache.new
