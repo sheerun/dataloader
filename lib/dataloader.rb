@@ -1,7 +1,9 @@
 require "concurrent"
 require "promise"
 
-class Promise  # :nodoc:
+# :stopdoc:
+
+class Promise  
   alias_method :wait_old, :wait
 
   def wait
@@ -9,6 +11,8 @@ class Promise  # :nodoc:
     wait_old
   end
 end
+
+# :startdoc:
 
 class Dataloader
   VERSION = "1.0.0".freeze
