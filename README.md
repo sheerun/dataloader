@@ -51,7 +51,7 @@ Create a new `Dataloader` given a batch loading function and options.
 
 Loads a key, returning a [Promise](https://github.com/lgierth/promise.rb) for the value represented by that key.
 
-* key [Object] An key value to load (can be any object)
+  * key [Object] a key to load using `batch_load`
 
 You can resolve this promise when you actually need the value with `promise.sync`.
 
@@ -59,7 +59,7 @@ All calls to `#load` are batched until the first `#sync` is encountered. Then is
 
 ### `#load_many(keys)`
 
-* keys [Array<Object>] list of keys to load using `batch_load` proc
+  * keys [Array<Object>] list of keys to load using `batch_load`
 
 Loads multiple keys, promising an array of values:
 

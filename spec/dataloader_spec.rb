@@ -324,4 +324,5 @@ describe Dataloader do
 
     expect(one.sync).to eq([0,0])
   end
+
 end
