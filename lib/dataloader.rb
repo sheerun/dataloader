@@ -1,8 +1,7 @@
 require "concurrent"
 require "promise"
 
-# :stopdoc:
-
+# @private
 class Promise  
   alias_method :wait_old, :wait
 
@@ -11,8 +10,6 @@ class Promise
     wait_old
   end
 end
-
-# :startdoc:
 
 class Dataloader
   VERSION = "1.0.0".freeze
@@ -87,8 +84,7 @@ class Dataloader
     end
   end
 
-  private_constant :Batch
-
+  # @private
   attr_reader :batch_load
 
   # Creates new dataloader
@@ -109,6 +105,15 @@ class Dataloader
     Thread.current[:pending_batches] ||= []
   end
 
+  # Forces all currently pending promises to be executed and resolved
+  #
+  # This method is invoked automatically when value of any promise is requested with `.sync`
+  # @example Promise.rb implementation that waits for all batched promises (default):
+  #   class Promise  
+  #     def wait
+  #       Dataloader.wait
+  #     end
+  #   end
   def self.wait
     until Thread.current[:pending_batches].empty?
       pending = Thread.current[:pending_batches]
