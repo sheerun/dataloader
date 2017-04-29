@@ -45,19 +45,21 @@ Create a new `Dataloader` given a batch loading function and options.
 * `batch_load`: A block which accepts an Array of keys, and returns  Array of values or Hash that maps from keys to values (or a [Promise](https://github.com/lgierth/promise.rb) that returns such value).
 * `options`: An optional hash of options:
   * `:key` A function to produce a cache key for a given load key. Defaults to proc { |key| key }. Useful to provide when objects are keys and two similarly shaped objects should be considered equivalent.
-
+  * `:cache` An instance of cache used for caching of promies (the only required API is `#compute_if_absent(key)`). Defaults to `Concurrent::Map.new`. Useful for preserving or pre-populating the cache. You can pass `nil` if you want to disable the cache.
 
 ### `#load(key)`
 
 Loads a key, returning a [Promise](https://github.com/lgierth/promise.rb) for the value represented by that key.
 
-* key: An key value to load (can be any object)
+* key [Object] An key value to load (can be any object)
 
 You can resolve this promise when you actually need the value with `promise.sync`.
 
 All calls to `#load` are batched until the first `#sync` is encountered. Then is starts batching again, et caetera.
 
 ### `#load_many(keys)`
+
+* keys [Array<Object>] list of keys to load using `batch_load` proc
 
 Loads multiple keys, promising an array of values:
 
@@ -72,6 +74,10 @@ This is equivalent to the more verbose:
 promise = Promise.all([loader.load('a'), loader.load('b')])
 object_a, object_b = promise.sync
 ```
+
+### `#cache`
+
+Returns the internal cache that can be overridden with `:cache` option (see constructor)
 
 ## License
 

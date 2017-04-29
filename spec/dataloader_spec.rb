@@ -277,4 +277,51 @@ describe Dataloader do
                           ["loader", [0, 1, 2, 3, 5, 7]]
                         ])
   end
+
+  it 'can be passed a primed cache' do
+    cache = Concurrent::Map.new
+    cache[0] = 42
+
+    data_loader = Dataloader.new(cache: cache) do |ids|
+      ids.map { |id| id }
+    end
+
+    expect(data_loader.load(0).sync).to eq(42)
+  end
+
+  it 'can be passed a primed cache with promises' do
+    cache = Concurrent::Map.new
+    cache[0] = Promise.new.fulfill(42)
+
+    data_loader = Dataloader.new(cache: cache) do |ids|
+      ids.map { |id| id }
+    end
+
+    expect(data_loader.load(0).sync).to eq(42)
+  end
+
+  it 'can be passed custom cache' do
+    class Cache
+      def compute_if_absent(key)
+        42
+      end
+    end
+
+    data_loader = Dataloader.new(cache: Cache.new) do |ids|
+      ids.map { |id| id }
+    end
+
+    expect(data_loader.load(0).sync).to eq(42)
+  end
+
+  it 'can disable the cache' do
+    data_loader = Dataloader.new(cache: nil) do |ids|
+      ids.map { |id| ids }
+    end
+
+    one = data_loader.load(0)
+    two = data_loader.load(0)
+
+    expect(one.sync).to eq([0,0])
+  end
 end

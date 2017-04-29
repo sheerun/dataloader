@@ -2,7 +2,7 @@ require "concurrent"
 require "promise"
 
 # @!visibility private
-class Promise  
+class Promise
   alias_method :wait_old, :wait
 
   def wait
@@ -14,6 +14,13 @@ end
 class Dataloader
   # @!visibility private
   VERSION = "1.0.0".freeze
+
+  # @!visibility private
+  class NoCache
+    def compute_if_absent(key)
+      yield
+    end
+  end
 
   # @!visibility private
   class Batch
@@ -86,12 +93,17 @@ class Dataloader
     end
   end
 
+  # Returns the internal cache that can be overridden with `:cache` option (see constructor)
+  # Defaults to Concurrent::Map.new
+  attr_reader :cache
+
   # @!visibility private
   attr_reader :batch_load
 
   # Creates new dataloader
   #
   # @option options [Proc] :key A function to produce a cache key for a given load key. Defaults to proc { |key| key }. Useful to provide when objects are keys and two similarly shaped objects should be considered equivalent.
+  # @option options [Object] :cache An instance of cache used for caching of promies (the only required api is `#compute_if_absent`). Defaults to Concurrent::Map.new. Values can be either promises or actual values. You can pass `nil` if you don't want caching.
   # @yieldparam [Array] array is batched ids to load
   # @yieldreturn [Promise] a promise of loaded value with batch_load block
   def initialize(options = {}, &batch_load)
@@ -100,9 +112,14 @@ class Dataloader
         "Array<Object> and returns Array<Object> or Hash<Object, Object>"
     end
 
-    @key = options.fetch(:key, lambda { |key| key })
     @batch_load = batch_load
-    @cache = Concurrent::Map.new
+
+    @key = options.fetch(:key, lambda { |key| key })
+    @cache = options.fetch(:cache, Concurrent::Map.new)
+
+    if @cache.nil?
+      @cache = NoCache.new
+    end
 
     Thread.current[:pending_batches] ||= []
   end
@@ -111,7 +128,7 @@ class Dataloader
   #
   # This method is invoked automatically when value of any promise is requested with `.sync`
   # @example Promise.rb implementation that waits for all batched promises (default):
-  #   class Promise  
+  #   class Promise
   #     def wait
   #       Dataloader.wait
   #     end
@@ -125,9 +142,9 @@ class Dataloader
   end
 
   # Loads a key, returning a [Promise](https://github.com/lgierth/promise.rb) for the value represented by that key.
-  # 
+  #
   # You can resolve this promise when you actually need the value with `promise.sync`.
-  # 
+  #
   # All calls to `#load` are batched until the first `#sync` is encountered. Then is starts batching again, et caetera.
   #
   # @param key [Object] key to load using `batch_load` proc
@@ -147,22 +164,28 @@ class Dataloader
       raise TypeError, "The loader.load() must be called with a key, but got: #{key}"
     end
 
-    compute_if_absent(key) do
+    result = compute_if_absent(key) do
       batch_promise.queue(key)
     end
+
+    unless result.is_a?(Promise)
+      return Promise.new.fulfill(result)
+    end
+
+    result
   end
 
-  # 
+  #
   #
   # Loads multiple keys, promising an array of values:
-  # 
+  #
   # ```ruby
   # promise = loader.load_many(['a', 'b'])
   # object_a, object_b = promise.sync
   # ```
-  # 
+  #
   # This is equivalent to the more verbose:
-  # 
+  #
   # ```ruby
   # promise = Promise.all([loader.load('a'), loader.load('b')])
   # object_a, object_b = promise.sync

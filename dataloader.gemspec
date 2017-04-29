@@ -12,7 +12,7 @@ Gem::Specification.new do |s|
   s.license     = "MIT"
 
   s.add_runtime_dependency("concurrent-ruby", "~> 1")
-  s.add_runtime_dependency("promise.rb", "~> 0.7")
+  s.add_runtime_dependency("promise.rb", "~> 0.7.3")
 
   s.files         = Dir["lib/**/*"] + %w(LICENSE README.md)
   s.require_paths = ["lib"]
