@@ -93,7 +93,7 @@ user_loader.load(2)
   .then { |invited_by| "User 2 was invited by ${invited_by[:name]}" }
 ```
 
-A naive solution is to isisue four SQL queries to get required information, but with `Dataloader` this application will make at most two queries (one to load users, and second one to load invites).
+A naive solution is to issue four SQL queries to get required information, but with `Dataloader` this application will make at most two queries (one to load users, and second one to load invites).
 
 `Dataloader` allows you to decouple unrelated parts of your application without sacrificing the performance of batch data-loading. While the loader presents an API that loads individual values, all concurrent requests will be coalesced and presented to your batch loading function. This allows your application to safely distribute data fetching requirements throughout your application and maintain minimal outgoing data requests.
 
