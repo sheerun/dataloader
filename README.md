@@ -141,7 +141,7 @@ promise1 == promise2 # => true
 
 Avoid multiple requests from different users using the same `Dataloader` instance, which could result in cached data incorrectly appearing in each request. Typically, `Dataloader` instances are created when a request begins, and are not used once the request ends.
 
-See "Using with GraphQL" section to see how you can pass dataloader instances using context.
+See [Using with GraphQL](https://github.com/sheerun/dataloader#using-with-graphql) section to see how you can pass dataloader instances using context.
 
 ### Caching errors
 
