@@ -13,7 +13,7 @@ First, install Dataloader using bundler:
 gem "dataloader"
 ```
 
-To get started, create a `Dataloader`. Each `Dataloader` instance represents a unique cache. Typically instances are created per request when used within a web-server. To see how to use with GraphQL server, see section below.
+To get started, instantiate `Dataloader`. Each `Dataloader` instance represents a unique cache. Typically instances are created per request when used within a web-server. To see how to use with GraphQL server, see section below.
 
 
 ## Basic usage
