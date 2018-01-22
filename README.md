@@ -127,7 +127,7 @@ For example, if your batch function was provided the Array of keys: `[ 2, 9, 6 ]
 
 Dataloader provides a memoization cache for all loads which occur withing single instance of it. After `#load` is called once with a given key, the resulting Promise is cached to eliminate redundant loads.
 
-In addition to reliving pressure on your data storage, caching results per-request also creates fewer objects which may relieve memory pressure on your application:
+In addition to relieving pressure on your data storage, caching results per-request also creates fewer objects which may relieve memory pressure on your application:
 
 ```
 promise1 = user_loader.load(1)
@@ -181,9 +181,9 @@ loader.load('A')
 
 `Dataloader` is a class for fetching data given unique keys such as the id column (or any other key).
 
-Each `Dataloader` instance contains a unique memoized cache. Because of it, it is recommended to use one `Datalaoder` instane **per web request**. You can use more long-lived instances, but then you need to take care of manually cleaning the cache.
+Each `Dataloader` instance contains a unique memoized cache. Because of it, it is recommended to use one `Datalaoder` instance **per web request**. You can use more long-lived instances, but then you need to take care of manually cleaning the cache.
 
-You shound't share the same dataloader instance across different threads. This behavior is currently undefined.
+You shouldn't share the same dataloader instance across different threads. This behavior is currently undefined.
 
 ### `Dataloader.new(options = {}, &batch_load)`
 
@@ -206,7 +206,7 @@ Returns a [Promise](https://github.com/lgierth/promise.rb) of computed value.
 
 You can resolve this promise when you actually need the value with `promise.sync`.
 
-All calls to `#load` are batched until the first `#sync` is encountered. Then is starts batching again, et caetera.
+All calls to `#load` are batched until the first `#sync` is encountered. Then is starts batching again, et cetera.
 
 ### `#load_many(keys)`
 
@@ -242,7 +242,7 @@ loader.cache = Concurrent::Map.new
 
 Triggers all batched loaders until there are no keys to resolve.
 
-This method is invoked automatically when value of any promise is requested with `#sync`
+This method is invoked automatically when the value of any promise is requested with `#sync`.
 
 Here is the implementation that Dataloader sets as a default for [Promise](https://github.com/lgierth/promise.rb):
 
