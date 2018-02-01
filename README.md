@@ -19,7 +19,7 @@ To get started, instantiate `Dataloader`. Each `Dataloader` instance represents 
 ## Basic usage
 
 ```ruby
-# It will be called only once with ids = [1, 2, 3]
+# It will be called only once with ids = [0, 1, 2]
 loader = Dataloader.new do |ids|
   User.find(*ids)
 end
