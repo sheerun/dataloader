@@ -13,9 +13,6 @@ end
 
 class Dataloader
   # @!visibility private
-  VERSION = "1.0.0".freeze
-
-  # @!visibility private
   class NoCache
     def compute_if_absent(key)
       yield
