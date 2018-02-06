@@ -449,4 +449,12 @@ describe Dataloader do
 
     expect(one).to be(two)
   end
+
+  describe "::GraphQL.use" do
+    it "calls #lazy_resolve(Promise, :sync) once on the given argument" do
+      double = instance_double("GraphQL::Define::DefinedObjectProxy")
+      expect(double).to receive(:lazy_resolve).with(Promise, :sync).once
+      Dataloader::GraphQL.use(double)
+    end
+  end
 end
