@@ -93,6 +93,21 @@ class Dataloader
     end
   end
 
+  # Plugin module for {GraphQL}
+  #
+  # @example
+  #   Schema = GraphQL::Schema.define do
+  #     use Dataloader::GraphQL
+  #     query QueryType
+  #   end
+  module GraphQL
+    # @!visibility private
+    # @param defn [GraphQL::Define::DefinedObjectProxy]
+    def self.use(defn)
+      defn.lazy_resolve(Promise, :sync)
+    end
+  end
+
   # Returns the internal cache that can be overridden with `:cache` option (see constructor)
   # This field is writable, so you can reset the cache with something like:
   #

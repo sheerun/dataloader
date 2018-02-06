@@ -56,7 +56,10 @@ QueryType = GraphQL::ObjectType.define do
 end
 
 Schema = GraphQL::Schema.define do
-  lazy_resolve(Promise, :sync)
+  # For graphql >= 1.5.0
+  use Dataloader::GraphQL
+  # Otherwise
+  Dataloader::GraphQL.use(self)
 
   query QueryType
 end
