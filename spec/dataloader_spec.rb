@@ -34,19 +34,6 @@ describe Dataloader do
     expect(two).to eq("awesome 2")
   end
 
-  it "can resolve multiple values" do
-    loader = Dataloader.new do |ids|
-      ids.map { |id| "awesome #{id}" }
-    end
-
-    promise = loader.load_many([1, 2])
-
-    one, two = promise.sync
-
-    expect(one).to eq("awesome 1")
-    expect(two).to eq("awesome 2")
-  end
-
   it "runs loader just one time, even for multiple values" do
     loader = Dataloader.new do |ids|
       ids.map { |_id| ids }
