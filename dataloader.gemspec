@@ -1,8 +1,10 @@
 $LOAD_PATH.push File.expand_path("../lib", __FILE__)
 
+require "dataloader/version"
+
 Gem::Specification.new do |s|
   s.name        = "dataloader"
-  s.version     = "0.0.0"
+  s.version     = Dataloader::VERSION
   s.platform    = Gem::Platform::RUBY
   s.authors     = ["Adam Stankiewicz"]
   s.email       = ["sheerun@sher.pl"]
