@@ -15,6 +15,7 @@ gem "dataloader"
 
 To get started, instantiate `Dataloader`. Each `Dataloader` instance represents a unique cache. Typically instances are created per request when used within a web-server. To see how to use with GraphQL server, see section below.
 
+Dataloader is dependent on [promise.rb](https://github.com/lgierth/promise.rb) (`Promise` class) which you can use freely for batch-ready code (e.g. loader can return `Promise` that returns a `Promise` that returns a `Promise`). Dataloader will try to batch most of them.
 
 ## Basic usage
 
