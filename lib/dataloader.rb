@@ -12,6 +12,10 @@ class Promise
 end
 
 class Dataloader
+
+  # @!visibility private
+  BATCHES_THREAD_KEY = :pending_batches
+
   # @!visibility private
   class NoCache
     def compute_if_absent(key)
@@ -31,7 +35,7 @@ class Dataloader
       # This is where items to batch load are stored
       @queue = Concurrent::Array.new
       # We store pending batches to load per-thread
-      Thread.current[:pending_batches].unshift(self)
+      Thread.current[BATCHES_THREAD_KEY].unshift(self)
     end
 
     def dispatch
@@ -112,7 +116,7 @@ class Dataloader
   # @yieldparam [Array] array is batched ids to load
   # @yieldreturn [Promise] a promise of loaded value with batch_load block
   def initialize(options = {}, &batch_load)
-    Thread.current[:pending_batches] ||= []
+    Thread.current[BATCHES_THREAD_KEY] ||= []
 
     unless block_given?
       raise TypeError, "Dataloader must be constructed with a block which accepts " \
@@ -141,9 +145,10 @@ class Dataloader
   #     end
   #   end
   def self.wait
-    until Thread.current[:pending_batches].empty?
-      pending = Thread.current[:pending_batches]
-      Thread.current[:pending_batches] = []
+    return if Thread.current[BATCHES_THREAD_KEY].nil?
+    until Thread.current[BATCHES_THREAD_KEY].empty?
+      pending = Thread.current[BATCHES_THREAD_KEY]
+      Thread.current[BATCHES_THREAD_KEY] = []
       pending.each(&:dispatch)
     end
   end
