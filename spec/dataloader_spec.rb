@@ -1,4 +1,9 @@
 describe Dataloader do
+
+  before(:each) do
+    Thread.current[Dataloader::BATCHES_THREAD_KEY] = nil
+  end
+
   it "can resolve single value" do
     loader = Dataloader.new do |ids|
       ids.map { |id| "awesome #{id}" }
@@ -435,5 +440,11 @@ describe Dataloader do
     two = loader.load(0)
 
     expect(one).to be(two)
+  end
+
+  it 'does not raise an error when Promise.wait is called before a Dataloader has been initialized' do
+    expect {
+      Promise.resolve(true).wait
+    }.not_to raise_error
   end
 end
